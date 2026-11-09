@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Cycora - Control Menstrual y Síntomas</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Google Fonts: Plus Jakarta Sans para máxima legibilidad y estética médica moderna -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- ====================================================================
+         BARRA LATERAL (Desktop & Tablet >= 900px)
+         ==================================================================== -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1>Cycora</h1>
+          <span class="tagline">Control menstrual & salud</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="tab-today">
+          <span class="nav-icon">🌸</span>
+          <span class="nav-label">Hoy / Ciclo</span>
+        </button>
+        <button class="nav-item" data-tab="tab-calendar">
+          <span class="nav-icon">📅</span>
+          <span class="nav-label">Calendario</span>
+        </button>
+        <button class="nav-item" data-tab="tab-tracking">
+          <span class="nav-icon">📝</span>
+          <span class="nav-label">Registro Diario</span>
+        </button>
+        <button class="nav-item" data-tab="tab-notifications">
+          <span class="nav-icon">🔔</span>
+          <span class="nav-label">Alertas</span>
+          <span class="notification-badge" id="badge-notifications-count" style="display:none;">0</span>
+        </button>
+        <button class="nav-item" data-tab="tab-profile">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Perfil & Método</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-chip" id="sidebar-user-chip">
+          <div class="avatar" id="sidebar-user-avatar">?</div>
+          <div class="user-details">
+            <span class="user-name" id="sidebar-user-name">Sin usuario</span>
+            <span class="user-method" id="sidebar-user-method">Configurar método</span>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm btn-block mt-2" id="btn-switch-user">
+          ➕ Nueva Usuaria
+        </button>
+      </div>
+    </aside>
+
+    <!-- ====================================================================
+         CONTENIDO PRINCIPAL
+         ==================================================================== -->
+    <main class="main-content">
+      <!-- HEADER PRINCIPAL -->
+      <header class="top-header">
+        <div class="header-left">
+          <h2 id="header-title">Mi Ciclo</h2>
+          <span class="header-date" id="header-current-date">Hoy</span>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline btn-sm" id="btn-header-new-user" title="Crear nueva usuaria">
+            ➕ Nueva Usuaria
+          </button>
+          <button class="btn-icon" id="btn-quick-notif" title="Notificaciones">
+            <span>🔔</span>
+            <span class="notification-dot" id="header-notif-dot" style="display:none;"></span>
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-quick-log">
+            <span>+</span> Registrar Hoy
+          </button>
+        </div>
+      </header>
+
+      <!-- PESTAÑA 1: HOY / RUEDA CIRCULAR (28 DÍAS) Y ESTADO -->
+      <section id="tab-today" class="tab-pane active">
+        <div class="dashboard-grid">
+          <!-- RUEDA CIRCULAR INTERACTIVA -->
+          <div class="card card-hero">
+            <div class="card-header">
+              <h3>Fase Actual & Rueda del Ciclo</h3>
+              <span class="badge" id="hero-phase-badge">Fase Menstrual</span>
+            </div>
+            
+            <div class="wheel-container">
+              <div class="svg-wheel-wrapper">
+                <svg id="cycle-wheel-svg" viewBox="0 0 320 320">
+                  <!-- Segmentos SVG calculados dinámicamente -->
+                </svg>
+                <div class="wheel-center-info">
+                  <span class="countdown-number" id="wheel-countdown-days">--</span>
+                  <span class="countdown-label" id="wheel-countdown-label">días restantes</span>
+                  <span class="wheel-subtext" id="wheel-cycle-day">Día del ciclo</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ADAPTACIÓN DEL MÉTODO ANTICONCEPTIVO -->
+            <div class="method-adaptation-alert" id="method-adaptation-box">
+              <div class="adaptation-icon">💡</div>
+              <div class="adaptation-text">
+                <strong id="method-adaptation-title">Método activo</strong>
+                <p id="method-adaptation-desc">Configuración del método.</p>
+              </div>
+            </div>
+
+            <!-- ACCIONES DE PERIODO (INICIO CON RETROACTIVO Y FIN) -->
+            <div class="period-quick-actions">
+              <button class="btn btn-danger" id="btn-start-period">
+                🩸 Marcar Inicio de Periodo
+              </button>
+              <button class="btn btn-outline" id="btn-end-period">
+                ✓ Marcar Fin de Sangrado
+              </button>
+            </div>
+          </div>
+
+          <!-- COLUMNA LATERAL: DETALLES BIOLÓGICOS Y RESUMEN DEL DÍA -->
+          <div class="dashboard-side-col">
+            <!-- DETALLE BIOLÓGICO -->
+            <div class="card">
+              <div class="card-header">
+                <h3>Detalle Biológico</h3>
+                <span class="fertility-status" id="fertility-badge">Fertilidad</span>
+              </div>
+              <div class="phase-bio-body">
+                <div class="bio-stat">
+                  <span class="bio-label">Hormonas dominantes:</span>
+                  <strong class="bio-value" id="bio-hormones">Cargando...</strong>
+                </div>
+                <p class="bio-description" id="bio-description">
+                  Información de la fase.
+                </p>
+                <div class="bio-stat" id="bio-next-period-box">
+                  <span class="bio-label">Siguiente sangrado estimado:</span>
+                  <strong class="bio-value" id="bio-next-period-date">--</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- RESUMEN DE HOY -->
+            <div class="card">
+              <div class="card-header">
+                <h3>Tu Registro de Hoy</h3>
+                <button class="btn-link" id="btn-edit-today-log">Editar</button>
+              </div>
+              <div id="today-summary-content" class="today-summary-empty">
+                <p>No has registrado tus síntomas o ánimo el día de hoy.</p>
+                <button class="btn btn-secondary btn-sm" id="btn-log-first-time">
+                  📝 Registrar síntomas ahora
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 2: CALENDARIO MENSUAL & HISTORIAL DE CICLOS -->
+      <section id="tab-calendar" class="tab-pane">
+        <div class="calendar-layout">
+          <!-- VISTA MENSUAL -->
+          <div class="card calendar-card">
+            <div class="calendar-header">
+              <button class="btn-icon" id="btn-prev-month">◀</button>
+              <h3 id="calendar-month-title">Mes Año</h3>
+              <button class="btn-icon" id="btn-next-month">▶</button>
+            </div>
+
+            <div class="calendar-weekdays">
+              <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+            </div>
+
+            <div class="calendar-grid" id="calendar-days-grid">
+              <!-- Renderizado de días -->
+            </div>
+
+            <div class="calendar-legend">
+              <div class="legend-item"><span class="legend-dot dot-period"></span> Sangrado</div>
+              <div class="legend-item"><span class="legend-dot dot-fertile"></span> Ventana Fértil</div>
+              <div class="legend-item"><span class="legend-dot dot-ovulation"></span> Ovulación</div>
+              <div class="legend-item"><span class="legend-dot dot-symptom"></span> Síntomas / Ánimo</div>
+            </div>
+          </div>
+
+          <!-- HISTORIAL DE CICLOS -->
+          <div class="card cycle-history-card">
+            <div class="card-header">
+              <h3>Historial de Ciclos</h3>
+              <span class="badge" id="history-cycle-count">0 ciclos</span>
+            </div>
+            <div class="history-averages">
+              <div class="avg-box">
+                <span class="avg-val" id="avg-cycle-len">--</span>
+                <span class="avg-lbl">Días ciclo promedio</span>
+              </div>
+              <div class="avg-box">
+                <span class="avg-val" id="avg-period-len">--</span>
+                <span class="avg-lbl">Días sangrado promedio</span>
+              </div>
+            </div>
+            <div class="cycle-history-list" id="cycle-history-list">
+              <!-- Ciclos previos -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 3: FORMULARIO DE REGISTRO DIARIO (SÍNTOMAS Y ÁNIMO) -->
+      <section id="tab-tracking" class="tab-pane">
+        <div class="tracking-form-container">
+          <div class="card form-card">
+            <div class="card-header">
+              <div>
+                <h3>Registro Diario</h3>
+                <p class="subtitle">Registra tu bienestar físico, emocional y características del flujo</p>
+              </div>
+              <div class="date-selector-wrapper">
+                <label for="log-date-input">Fecha:</label>
+                <input type="date" id="log-date-input" class="form-control-sm" />
+              </div>
+            </div>
+
+            <form id="daily-log-form">
+              <!-- 1. ESTADO DE ÁNIMO -->
+              <div class="form-section">
+                <label class="section-title">1. Estado de Ánimo</label>
+                <div class="mood-selector-grid">
+                  <label class="mood-option">
+                    <input type="radio" name="mood" value="feliz" checked />
+                    <span class="mood-card">
+                      <span class="mood-emoji">😊</span>
+                      <span class="mood-label">Feliz</span>
+                    </span>
+                  </label>
+                  <label class="mood-option">
+                    <input type="radio" name="mood" value="ansiosa" />
+                    <span class="mood-card">
+                      <span class="mood-emoji">😰</span>
+                      <span class="mood-label">Ansiosa</span>
+                    </span>
+                  </label>
+                  <label class="mood-option">
+                    <input type="radio" name="mood" value="irritable" />
+                    <span class="mood-card">
+                      <span class="mood-emoji">😤</span>
+                      <span class="mood-label">Irritable</span>
+                    </span>
+                  </label>
+                  <label class="mood-option">
+                    <input type="radio" name="mood" value="triste" />
+                    <span class="mood-card">
+                      <span class="mood-emoji">😢</span>
+                      <span class="mood-label">Triste</span>
+                    </span>
+                  </label>
+                  <label class="mood-option">
+                    <input type="radio" name="mood" value="energica" />
+                    <span class="mood-card">
+                      <span class="mood-emoji">⚡</span>
+                      <span class="mood-label">Enérgica</span>
+                    </span>
+                  </label>
+                  <label class="mood-option">
+                    <input type="radio" name="mood" value="neutral" />
+                    <span class="mood-card">
+                      <span class="mood-emoji">😐</span>
+                      <span class="mood-label">Neutral</span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 2. SÍNTOMAS FÍSICOS Y SEVERIDAD DE CÓLICOS -->
+              <div class="form-section">
+                <label class="section-title">2. Síntomas Físicos</label>
+                <div class="cramps-intensity-box">
+                  <div class="cramps-header">
+                    <span>Intensidad de Cólicos:</span>
+                    <strong id="cramps-severity-label">Ninguno</strong>
+                  </div>
+                  <div class="severity-buttons">
+                    <button type="button" class="btn-chip active" data-severity="">Ninguno</button>
+                    <button type="button" class="btn-chip" data-severity="leve">Leve</button>
+                    <button type="button" class="btn-chip" data-severity="moderada">Moderada</button>
+                    <button type="button" class="btn-chip" data-severity="severa">Severa</button>
+                  </div>
+                </div>
+
+                <div class="checkbox-chips-grid">
+                  <label class="chip-option">
+                    <input type="checkbox" name="symptom" value="dolor_de_cabeza" />
+                    <span class="chip-content">🤕 Dolor de cabeza</span>
+                  </label>
+                  <label class="chip-option">
+                    <input type="checkbox" name="symptom" value="hinchazon" />
+                    <span class="chip-content">🎈 Hinchazón</span>
+                  </label>
+                  <label class="chip-option">
+                    <input type="checkbox" name="symptom" value="sensibilidad_de_senos" />
+                    <span class="chip-content">🍈 Sensibilidad en senos</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 3. CARACTERÍSTICAS DEL FLUJO -->
+              <div class="form-section">
+                <label class="section-title">3. Características del Flujo</label>
+                <div class="flow-selector-grid">
+                  <label class="flow-option">
+                    <input type="checkbox" name="flow" value="manchado" />
+                    <span class="flow-card">
+                      <span class="flow-dot spotting-dot"></span>
+                      <div>
+                        <strong>Manchado (Spotting)</strong>
+                        <small>Flujo muy leve o intermitente</small>
+                      </div>
+                    </span>
+                  </label>
+                  <label class="flow-option">
+                    <input type="checkbox" name="flow" value="flujo_regular" />
+                    <span class="flow-card">
+                      <span class="flow-dot regular-dot"></span>
+                      <div>
+                        <strong>Flujo Regular</strong>
+                        <small>Sangrado menstrual continuo</small>
+                      </div>
+                    </span>
+                  </label>
+                  <label class="flow-option">
+                    <input type="checkbox" name="flow" value="presencia_de_coagulos" />
+                    <span class="flow-card">
+                      <span class="flow-dot clots-dot"></span>
+                      <div>
+                        <strong>Presencia de Coágulos</strong>
+                        <small>Flujo denso con grumos</small>
+                      </div>
+                    </span>
+                  </label>
+                  <label class="flow-option">
+                    <input type="checkbox" name="flow" value="flujo_vaginal_no_menstrual" />
+                    <span class="flow-card">
+                      <span class="flow-dot clear-dot"></span>
+                      <div>
+                        <strong>Flujo No Menstrual</strong>
+                        <small>Moco fértil, acuoso o transparente</small>
+                      </div>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 4. NOTAS ADICIONALES -->
+              <div class="form-section">
+                <label class="section-title" for="log-notes">4. Notas Adicionales</label>
+                <textarea id="log-notes" rows="3" class="form-control" placeholder="Escribe observaciones, medicación o sensaciones..."></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-block">
+                  💾 Guardar Registro Diario
+                </button>
+              </div>
+            </form>
+
+            <div id="health-indicators-alert-box" class="health-results-container" style="display:none;">
+              <h4>🩺 Indicadores de Salud Detectados</h4>
+              <div id="health-indicators-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 4: BANDEJA DE ALERTAS Y RECORDATORIOS -->
+      <section id="tab-notifications" class="tab-pane">
+        <div class="notifications-layout">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>Gestor de Recordatorios y Alertas</h3>
+                <p class="subtitle">Recordatorios de tomas, avisos previos e interacciones</p>
+              </div>
+              <button class="btn btn-outline btn-sm" id="btn-trigger-test-alert">
+                ⚡ Probar Alerta
+              </button>
+            </div>
+
+            <div class="alerts-list" id="alerts-container">
+              <!-- Alertas dinámicas -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 5: PERFIL Y MÉTODO ANTICONCEPTIVO -->
+      <section id="tab-profile" class="tab-pane">
+        <div class="profile-layout">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>Configuración de Perfil y Método Anticonceptivo</h3>
+                <p class="subtitle">Personaliza tus parámetros para que Cycora adapte el motor biológico</p>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" id="btn-create-new-profile-tab">
+                ➕ Registrar Nueva Usuaria
+              </button>
+            </div>
+
+            <form id="profile-form">
+              <div class="form-group">
+                <label for="profile-name">Nombre de Usuaria:</label>
+                <input type="text" id="profile-name" class="form-control" required />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col">
+                  <label for="profile-cycle-len">Duración Promedio del Ciclo (días):</label>
+                  <input type="number" id="profile-cycle-len" class="form-control" min="20" max="45" required />
+                </div>
+                <div class="form-group col">
+                  <label for="profile-period-len">Duración Promedio Sangrado (días):</label>
+                  <input type="number" id="profile-period-len" class="form-control" min="2" max="10" required />
+                </div>
+              </div>
+
+              <hr class="divider" />
+
+              <div class="form-section">
+                <label class="section-title">Método Anticonceptivo Activo</label>
+                <div class="category-tabs">
+                  <button type="button" class="cat-tab-btn active" data-cat="HORMONAL_LARGA_DURACION">
+                    Larga Duración
+                  </button>
+                  <button type="button" class="cat-tab-btn" data-cat="DIARIOS">
+                    Diarios (Pastillas)
+                  </button>
+                  <button type="button" class="cat-tab-btn" data-cat="BARRERA_NINGUNO">
+                    Barrera / Ninguno
+                  </button>
+                </div>
+
+                <div class="form-group mt-3">
+                  <label for="profile-method-select">Selecciona el Método Específico:</label>
+                  <select id="profile-method-select" class="form-control">
+                    <!-- Opciones dinámicas -->
+                  </select>
+                </div>
+
+                <!-- CAMPO CONDICIONAL: FECHA PARA DIU/IMPLANTE/INYECCIÓN -->
+                <div id="conditional-date-field" class="conditional-box" style="display:none;">
+                  <div class="form-row">
+                    <div class="form-group col">
+                      <label for="method-app-date">Fecha de Colocación / Inicio:</label>
+                      <input type="date" id="method-app-date" class="form-control" />
+                    </div>
+                    <div class="form-group col">
+                      <label for="method-exp-date">Fecha de Vencimiento / Cambio:</label>
+                      <input type="date" id="method-exp-date" class="form-control" />
+                    </div>
+                  </div>
+                  <small class="helper-text">Cycora te notificará cuando se acerque la fecha de recambio.</small>
+                </div>
+
+                <!-- CAMPO CONDICIONAL: HORA PARA PASTILLAS -->
+                <div id="conditional-time-field" class="conditional-box" style="display:none;">
+                  <div class="form-group">
+                    <label for="method-pill-time">Hora Diaria de Toma de Pastilla:</label>
+                    <input type="time" id="method-pill-time" class="form-control" value="21:00" />
+                  </div>
+                  <small class="helper-text">Recibirás una alerta diaria a esta hora para asegurar la adherencia.</small>
+                </div>
+
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input type="checkbox" id="profile-reminder-active" checked />
+                    <span>Activar recordatorios automáticos de este método</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                  Guardar Perfil y Adaptar Algoritmo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ====================================================================
+         NAVEGACIÓN INFERIOR (Móvil < 900px)
+         ==================================================================== -->
+    <nav class="bottom-nav">
+      <button class="bottom-nav-item active" data-tab="tab-today">
+        <span class="icon">🌸</span>
+        <span class="label">Hoy</span>
+      </button>
+      <button class="bottom-nav-item" data-tab="tab-calendar">
+        <span class="icon">📅</span>
+        <span class="label">Calendario</span>
+      </button>
+      <button class="bottom-nav-item center-fab" data-tab="tab-tracking" id="fab-tracking" title="Registrar síntomas">
+        <span class="icon">+</span>
+      </button>
+      <button class="bottom-nav-item" data-tab="tab-notifications">
+        <span class="icon">🔔</span>
+        <span class="label">Alertas</span>
+        <span class="bottom-dot" id="bottom-notif-dot" style="display:none;"></span>
+      </button>
+      <button class="bottom-nav-item" data-tab="tab-profile">
+        <span class="icon">⚙️</span>
+        <span class="label">Perfil</span>
+      </button>
+    </nav>
+
+    <!-- ====================================================================
+         MODAL 1: REGISTRO INICIAL / ONBOARDING (CREAR USUARIA NUEVA)
+         ==================================================================== -->
+    <div id="modal-onboarding" class="modal-backdrop" style="display:none;">
+      <div class="modal-card modal-card-lg">
+        <div class="modal-header">
+          <div>
+            <h4>🌸 Bienvenida a Cycora</h4>
+            <p class="subtitle">Crea tu perfil inicial para personalizar el algoritmo de tu ciclo</p>
+          </div>
+          <button class="modal-close" id="btn-close-onboarding" style="display:none;">×</button>
+        </div>
+        <div class="modal-body">
+          <form id="onboarding-form">
+            <div class="form-group">
+              <label for="onboarding-name">Tu Nombre:</label>
+              <input type="text" id="onboarding-name" class="form-control" placeholder="Ej. Valentina Ruiz" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col">
+                <label for="onboarding-cycle-len">Duración de tu Ciclo (días):</label>
+                <input type="number" id="onboarding-cycle-len" class="form-control" value="28" min="20" max="45" required />
+                <small class="text-muted">El promedio biológico regular es de 28 días.</small>
+              </div>
+              <div class="form-group col">
+                <label for="onboarding-period-len">Días de Sangrado:</label>
+                <input type="number" id="onboarding-period-len" class="form-control" value="5" min="2" max="10" required />
+                <small class="text-muted">El promedio habitual es de 3 a 7 días.</small>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <label class="section-title">Selecciona tu Método Anticonceptivo Actual</label>
+              <div class="category-tabs">
+                <button type="button" class="cat-tab-btn active" data-onboard-cat="HORMONAL_LARGA_DURACION">
+                  Larga Duración
+                </button>
+                <button type="button" class="cat-tab-btn" data-onboard-cat="DIARIOS">
+                  Diarios (Pastillas)
+                </button>
+                <button type="button" class="cat-tab-btn" data-onboard-cat="BARRERA_NINGUNO">
+                  Barrera / Ninguno
+                </button>
+              </div>
+
+              <div class="form-group mt-3">
+                <label for="onboarding-method-select">Método:</label>
+                <select id="onboarding-method-select" class="form-control"></select>
+              </div>
+
+              <!-- Fechas para DIU/Implante -->
+              <div id="onboarding-date-field" class="conditional-box">
+                <div class="form-row">
+                  <div class="form-group col">
+                    <label for="onboarding-app-date">Fecha de Colocación / Inicio:</label>
+                    <input type="date" id="onboarding-app-date" class="form-control" />
+                  </div>
+                  <div class="form-group col">
+                    <label for="onboarding-exp-date">Fecha de Vencimiento / Cambio:</label>
+                    <input type="date" id="onboarding-exp-date" class="form-control" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hora para pastillas -->
+              <div id="onboarding-time-field" class="conditional-box" style="display:none;">
+                <div class="form-group">
+                  <label for="onboarding-pill-time">Hora Diaria de Toma:</label>
+                  <input type="time" id="onboarding-pill-time" class="form-control" value="21:00" />
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary btn-block">
+                ✨ Crear Perfil y Comenzar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL 2: INICIO DE PERIODO (CON AJUSTE RETROACTIVO)
+         ==================================================================== -->
+    <div id="modal-retroactive-period" class="modal-backdrop" style="display:none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h4>🩸 Registrar Inicio de Periodo (Día 1)</h4>
+          <button class="modal-close" id="btn-close-period-modal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>Indica la fecha en que comenzó tu sangrado menstrual. Puedes registrar hoy o una fecha pasada (ajuste retroactivo).</p>
+          <div class="form-group mt-3">
+            <label for="period-start-date-input">Fecha de Inicio:</label>
+            <input type="date" id="period-start-date-input" class="form-control" />
+          </div>
+          <div class="alert-info mt-2" id="retroactive-warning" style="display:none;">
+            ℹ️ <strong>Ajuste retroactivo:</strong> El motor recalculará la duración del ciclo previo y actualizará la fecha estimada del próximo periodo.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="btn-cancel-period-modal">Cancelar</button>
+          <button class="btn btn-danger" id="btn-confirm-start-period">Confirmar Inicio</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

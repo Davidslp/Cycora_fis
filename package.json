@@ -1,0 +1,23 @@
+{
+  "name": "cycora",
+  "version": "1.0.0",
+  "description": "Cycora - Aplicación de seguimiento del ciclo menstrual, registro de síntomas y recomendaciones adaptativas según método anticonceptivo",
+  "main": "index.ts",
+  "scripts": {
+    "start": "ts-node index.ts",
+    "build": "tsc",
+    "test": "jest"
+  },
+  "keywords": [
+    "menstrual-cycle",
+    "contraceptive-adaptation",
+    "health-tracker",
+    "symptoms",
+    "modular-architecture"
+  ],
+  "author": "Cycora Team (Danna Ruiz, David Lugo, Juan Diego Alvarez)",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
