@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -84,10 +84,25 @@
       <!-- HEADER PRINCIPAL -->
       <header class="top-header">
         <div class="header-left">
-          <h2 id="header-title">Mi Ciclo</h2>
-          <span class="header-date" id="header-current-date">Hoy</span>
+          <div class="header-brand">
+            <div class="header-brand-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </div>
+            <div class="header-brand-text">
+              <h2 id="header-title">Cycora</h2>
+              <span class="header-date" id="header-current-date">Hoy</span>
+            </div>
+          </div>
         </div>
         <div class="header-actions">
+          <button class="btn btn-primary btn-sm" id="btn-install-pwa" title="Instalar Cycora para usar sin conexión">
+            ⬇️ Instalar App
+          </button>
+          <button class="btn-icon-toggle" id="btn-theme-toggle" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
+            🌙
+          </button>
           <button class="btn btn-outline btn-sm" id="btn-header-new-user" title="Crear nueva usuaria">
             ➕ Nueva Usuaria
           </button>
@@ -186,7 +201,7 @@
 
       <!-- PESTAÑA 2: CALENDARIO MENSUAL & HISTORIAL DE CICLOS -->
       <section id="tab-calendar" class="tab-pane">
-        <div class="calendar-layout">
+        <div class="calendar-with-detail">
           <!-- VISTA MENSUAL -->
           <div class="card calendar-card">
             <div class="calendar-header">
@@ -211,6 +226,16 @@
             </div>
           </div>
 
+          <!-- PANEL DE DETALLE DEL DÍA SELECCIONADO -->
+          <aside class="day-detail-panel" id="day-detail-panel">
+            <div class="day-detail-empty" id="day-detail-empty">
+              👆 Pasa el mouse por un día para ver un resumen, o haz clic para ver el detalle completo aquí.
+            </div>
+            <div id="day-detail-content" style="display:none;"></div>
+          </aside>
+        </div>
+
+        <div class="calendar-layout" style="margin-top:18px;">
           <!-- HISTORIAL DE CICLOS -->
           <div class="card cycle-history-card">
             <div class="card-header">
@@ -409,7 +434,43 @@
                 <p class="subtitle">Recordatorios de tomas, avisos previos e interacciones</p>
               </div>
               <button class="btn btn-outline btn-sm" id="btn-trigger-test-alert">
-                ⚡ Probar Alerta
+                ⚡ Probar Alerta (con sonido)
+              </button>
+            </div>
+
+            <!-- PROGRAMAR ALARMA: FECHA + HORA + SONIDO -->
+            <div class="schedule-reminder-box">
+              <div class="form-group" style="flex:1 1 100%;">
+                <label for="reminder-title-input">Nombre de la alarma:</label>
+                <input type="text" id="reminder-title-input" class="form-control" placeholder="Ej. Tomar pastilla" />
+              </div>
+              <div class="form-group" style="flex:1 1 150px;">
+                <label for="reminder-date-input">Fecha:</label>
+                <input type="date" id="reminder-date-input" class="form-control" />
+              </div>
+              <div class="form-group" style="flex:0 0 120px;">
+                <label for="reminder-time-input">Hora:</label>
+                <input type="time" id="reminder-time-input" class="form-control" value="21:00" />
+              </div>
+              <div class="form-group" style="flex:1 1 170px;">
+                <label for="reminder-sound-select">Sonido:</label>
+                <select id="reminder-sound-select" class="form-control">
+                  <option value="clasico">🔔 Clásico (3 bips)</option>
+                  <option value="suave">🎵 Suave</option>
+                  <option value="triple">⏰ Triple rápido</option>
+                  <option value="campana">🛎️ Campana</option>
+                </select>
+              </div>
+              <button class="btn btn-outline" id="btn-preview-sound" type="button" title="Escuchar el sonido">▶ Probar sonido</button>
+              <button class="btn btn-primary" id="btn-schedule-reminder" type="button">⏰ Programar Alarma</button>
+            </div>
+            <div class="sound-toggle-row">
+              <label>
+                <input type="checkbox" id="toggle-alarm-sound" checked />
+                Reproducir sonido al activarse la alarma
+              </label>
+              <button class="btn-link" id="btn-enable-notifications" type="button" style="margin-left:auto;">
+                🔔 Permitir notificaciones del sistema
               </button>
             </div>
 

@@ -506,15 +506,20 @@
         }
 
         cell.appendChild(dotsContainer);
+
+        // Previsualización al pasar el mouse (tooltip con resumen de lo anotado).
+        const preview = document.createElement('div');
+        preview.className = 'cal-day-preview';
+        preview.innerHTML = buildDayPreviewHTML(dateStr, log);
+        cell.appendChild(preview);
+        cell.classList.add('has-log');
       }
 
+      // Clic: selecciona el día y muestra el detalle completo al lado.
       cell.addEventListener('click', () => {
-        const dateInput = document.getElementById('log-date-input');
-        if (dateInput) {
-          dateInput.value = dateStr;
-          loadLogIntoForm(dateStr);
-        }
-        switchTab('tab-tracking');
+        document.querySelectorAll('.cal-day-cell.is-selected').forEach((c) => c.classList.remove('is-selected'));
+        cell.classList.add('is-selected');
+        showDayDetail(dateStr);
       });
 
       fragment.appendChild(cell);
@@ -566,6 +571,102 @@
     });
 
     DOM.cycleHistoryList.appendChild(fragment);
+  }
+
+  // --------------------------------------------------------------------------
+  // PREVISUALIZACIÓN Y DETALLE DE UN DÍA DEL CALENDARIO
+  // --------------------------------------------------------------------------
+  const MOOD_LABELS = {
+    feliz: '😊 Feliz', ansiosa: '😰 Ansiosa', irritable: '😤 Irritable',
+    triste: '😢 Triste', energica: '⚡ Enérgica', neutral: '😐 Neutral'
+  };
+  const SYMPTOM_LABELS = {
+    dolor_de_cabeza: 'Dolor de cabeza', hinchazon: 'Hinchazón', sensibilidad_de_senos: 'Sensibilidad en senos'
+  };
+  const FLOW_LABELS = {
+    manchado: 'Manchado', flujo_regular: 'Flujo regular',
+    presencia_de_coagulos: 'Coágulos', flujo_vaginal_no_menstrual: 'Flujo no menstrual'
+  };
+
+  function mapList(values, dict) {
+    return (values || []).map((v) => dict[v] || v).join(', ');
+  }
+
+  // Tooltip corto que aparece al pasar el mouse.
+  function buildDayPreviewHTML(dateStr, log) {
+    const mood = MOOD_LABELS[log.mood] || log.mood || '—';
+    const cramps = log.cramps ? log.cramps.severity : 'ninguno';
+    const symptoms = (log.physicalSymptoms && log.physicalSymptoms.length)
+      ? mapList(log.physicalSymptoms, SYMPTOM_LABELS) : 'ninguno';
+    const flow = (log.flowCharacteristics && log.flowCharacteristics.length)
+      ? mapList(log.flowCharacteristics, FLOW_LABELS) : 'sin registro';
+    return `
+      <span class="preview-title">${dateStr}</span>
+      <span class="preview-row">Ánimo: ${mood}</span>
+      <span class="preview-row">Cólicos: ${cramps}</span>
+      <span class="preview-row">Síntomas: ${symptoms}</span>
+      <span class="preview-row">Flujo: ${flow}</span>
+      ${log.notes ? `<span class="preview-row">📝 ${log.notes.length > 60 ? log.notes.slice(0, 60) + '…' : log.notes}</span>` : ''}
+    `;
+  }
+
+  // Panel lateral con el detalle completo al hacer clic en un día.
+  function showDayDetail(dateStr) {
+    const empty = document.getElementById('day-detail-empty');
+    const content = document.getElementById('day-detail-content');
+    if (!content) return;
+
+    const log = state.dailyLogs[dateStr];
+    const pred = BiologicalEngine.calculatePredictions();
+
+    // Determinar la fase del día seleccionado (si hay ciclo activo).
+    let phaseName = 'Sin ciclo activo';
+    let phaseColor = 'var(--text-muted)';
+    if (pred.activeCycle) {
+      const startMs = new Date(pred.activeCycle.startDate + 'T00:00:00').getTime();
+      const dayMs = new Date(dateStr + 'T00:00:00').getTime();
+      const diffDays = Math.floor((dayMs - startMs) / 86400000);
+      if (diffDays >= 0) {
+        const cycleDay = (diffDays % pred.cycleLength) + 1;
+        if (cycleDay <= pred.periodDuration) { phaseName = 'Fase Menstrual'; phaseColor = 'var(--phase-menstrual)'; }
+        else if (pred.behavior.isOvulationSuppressed) { phaseName = 'Fase Activa Anticonceptiva'; phaseColor = 'var(--phase-luteal)'; }
+        else {
+          const ovu = pred.cycleLength - 14;
+          if (cycleDay >= ovu - 4 && cycleDay <= ovu + 1) { phaseName = cycleDay === ovu ? 'Ovulación' : 'Ventana Fértil'; phaseColor = 'var(--phase-ovulatory)'; }
+          else if (cycleDay < ovu - 4) { phaseName = 'Fase Folicular'; phaseColor = 'var(--phase-follicular)'; }
+          else { phaseName = 'Fase Lútea'; phaseColor = 'var(--phase-luteal)'; }
+        }
+      }
+    }
+
+    if (empty) empty.style.display = 'none';
+    content.style.display = 'block';
+
+    if (!log) {
+      content.innerHTML = `
+        <div class="detail-date">${dateStr}</div>
+        <span class="detail-phase" style="background:${phaseColor};">${phaseName}</span>
+        <p class="day-detail-empty" style="padding:12px 0;">No hay registro para este día.</p>
+        <button class="btn btn-secondary btn-sm btn-block" id="btn-detail-register">📝 Registrar este día</button>
+      `;
+    } else {
+      content.innerHTML = `
+        <div class="detail-date">${dateStr}</div>
+        <span class="detail-phase" style="background:${phaseColor};">${phaseName}</span>
+        <div class="detail-block"><span class="lbl">Estado de ánimo</span>${MOOD_LABELS[log.mood] || log.mood || '—'}</div>
+        <div class="detail-block"><span class="lbl">Cólicos</span>${log.cramps ? log.cramps.severity.toUpperCase() : 'Ninguno'}</div>
+        <div class="detail-block"><span class="lbl">Síntomas físicos</span>${(log.physicalSymptoms && log.physicalSymptoms.length) ? mapList(log.physicalSymptoms, SYMPTOM_LABELS) : 'Ninguno'}</div>
+        <div class="detail-block"><span class="lbl">Flujo</span>${(log.flowCharacteristics && log.flowCharacteristics.length) ? mapList(log.flowCharacteristics, FLOW_LABELS) : 'Sin registro'}</div>
+        ${log.notes ? `<div class="detail-block"><span class="lbl">Notas</span><div class="detail-notes">"${log.notes}"</div></div>` : ''}
+        <button class="btn btn-secondary btn-sm btn-block" id="btn-detail-register">✏️ Editar este día</button>
+      `;
+    }
+
+    document.getElementById('btn-detail-register')?.addEventListener('click', () => {
+      const dateInput = document.getElementById('log-date-input');
+      if (dateInput) { dateInput.value = dateStr; loadLogIntoForm(dateStr); }
+      switchTab('tab-tracking');
+    });
   }
 
   // ==========================================================================
@@ -801,18 +902,48 @@
         alerta_salud: '🩺'
       };
 
+      const scheduledDate = new Date(notif.scheduledFor);
+      const whenStr = `${scheduledDate.toLocaleDateString('es-ES')} ${scheduledDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+      const soundLabels = { clasico: 'Clásico', suave: 'Suave', triple: 'Triple', campana: 'Campana' };
+
+      // Lista de registros de atención (si existen).
+      const attendance = notif.attendance || [];
+      const attendanceHTML = attendance.length > 0 ? `
+        <div class="attendance-list">
+          <span class="attendance-title">📋 Atenciones registradas:</span>
+          ${attendance.map((a, idx) => `
+            <div class="attendance-row">
+              <span>✓ Atendida el ${new Date(a.date + 'T00:00:00').toLocaleDateString('es-ES')}${a.at ? ` (registrado ${new Date(a.at).toLocaleDateString('es-ES')})` : ''}</span>
+              <button class="btn-link btn-del-attendance" data-id="${notif.id}" data-idx="${idx}" title="Eliminar este registro">🗑</button>
+            </div>
+          `).join('')}
+        </div>
+      ` : '';
+
       card.innerHTML = `
         <div class="alert-badge-icon">${iconMap[notif.type] || '🔔'}</div>
         <div class="alert-content">
-          <h4>${notif.title}</h4>
+          <div class="alert-head-row">
+            <h4>${notif.title}</h4>
+            <button class="btn-icon-del btn-delete-alarm" data-id="${notif.id}" title="Eliminar alarma">🗑</button>
+          </div>
           <p>${notif.message}</p>
-          <span class="alert-timestamp">Programada para: ${new Date(notif.scheduledFor).toLocaleDateString()} | Estado: <strong>${notif.status.toUpperCase()}</strong></span>
+          <span class="alert-timestamp">⏰ ${whenStr} | 🔊 ${soundLabels[notif.sound] || 'Clásico'} | Estado: <strong>${notif.status.toUpperCase()}</strong></span>
+
           ${notif.status === 'pendiente' ? `
             <div class="alert-actions-row">
               <button class="btn btn-primary btn-sm btn-action-view" data-id="${notif.id}">✓ Entendido / Vista</button>
               <button class="btn btn-outline btn-sm btn-action-dismiss" data-id="${notif.id}">Omitir</button>
             </div>
           ` : ''}
+
+          <div class="attendance-register-row">
+            <label>Registrar atención en fecha:</label>
+            <input type="date" class="form-control-sm attendance-date-input" data-id="${notif.id}" value="${getTodayISO()}" />
+            <button class="btn btn-secondary btn-sm btn-register-attendance" data-id="${notif.id}">✓ Marcar atendida</button>
+          </div>
+
+          ${attendanceHTML}
         </div>
       `;
       fragment.appendChild(card);
@@ -826,6 +957,19 @@
     DOM.alertsContainer.querySelectorAll('.btn-action-dismiss').forEach(b => {
       b.addEventListener('click', () => respondToAlert(b.dataset.id, 'omitida'));
     });
+    DOM.alertsContainer.querySelectorAll('.btn-delete-alarm').forEach(b => {
+      b.addEventListener('click', () => deleteAlarm(b.dataset.id));
+    });
+    DOM.alertsContainer.querySelectorAll('.btn-register-attendance').forEach(b => {
+      b.addEventListener('click', () => {
+        const id = b.dataset.id;
+        const input = DOM.alertsContainer.querySelector(`.attendance-date-input[data-id="${id}"]`);
+        registerAttendance(id, input ? input.value : getTodayISO());
+      });
+    });
+    DOM.alertsContainer.querySelectorAll('.btn-del-attendance').forEach(b => {
+      b.addEventListener('click', () => deleteAttendance(b.dataset.id, Number(b.dataset.idx)));
+    });
   }
 
   function respondToAlert(id, response) {
@@ -836,6 +980,45 @@
       persistState();
       renderNotifications();
     }
+  }
+
+  // Elimina una alarma por completo (y cancela su temporizador si existe).
+  function deleteAlarm(id) {
+    if (!confirm('¿Eliminar esta alarma y todos sus registros de atención?')) return;
+    if (scheduledTimers.has(id)) {
+      clearTimeout(scheduledTimers.get(id));
+      scheduledTimers.delete(id);
+    }
+    state.notifications = state.notifications.filter(n => n.id !== id);
+    persistState();
+    renderNotifications();
+  }
+
+  // Registra que la alarma fue atendida en una fecha específica.
+  function registerAttendance(id, dateYMD) {
+    const alert = state.notifications.find(n => n.id === id);
+    if (!alert) return;
+    if (!alert.attendance) alert.attendance = [];
+
+    const date = dateYMD || getTodayISO();
+    if (alert.attendance.some(a => a.date === date)) {
+      window.alert('Ya existe un registro de atención para esa fecha en esta alarma.');
+      return;
+    }
+    alert.attendance.push({ date, at: new Date().toISOString() });
+    // Marcar como vista al atenderla.
+    if (alert.status === 'pendiente') alert.status = 'vista';
+    persistState();
+    renderNotifications();
+  }
+
+  // Elimina un registro de atención concreto de una alarma.
+  function deleteAttendance(id, idx) {
+    const alert = state.notifications.find(n => n.id === id);
+    if (!alert || !alert.attendance) return;
+    alert.attendance.splice(idx, 1);
+    persistState();
+    renderNotifications();
   }
 
   function triggerTestAlert() {
@@ -850,7 +1033,176 @@
     state.notifications.unshift(newAlert);
     persistState();
     renderNotifications();
+    fireAlert(newAlert); // suena y muestra notificación del sistema
     switchTab('tab-notifications');
+  }
+
+  // --------------------------------------------------------------------------
+  // SONIDO DE ALARMA (Web Audio API, sin archivos externos -> funciona offline)
+  // --------------------------------------------------------------------------
+  let audioCtx = null;
+
+  function isSoundEnabled() {
+    const toggle = document.getElementById('toggle-alarm-sound');
+    return toggle ? toggle.checked : true;
+  }
+
+  // Patrones de sonido disponibles (frecuencia Hz, inicio seg, tipo de onda).
+  const SOUND_PATTERNS = {
+    clasico: { wave: 'sine', beeps: [{ f: 880, t: 0 }, { f: 988, t: 0.22 }, { f: 1175, t: 0.44 }] },
+    suave:   { wave: 'sine', beeps: [{ f: 523, t: 0 }, { f: 659, t: 0.3 }] },
+    triple:  { wave: 'square', beeps: [{ f: 1046, t: 0 }, { f: 1046, t: 0.14 }, { f: 1046, t: 0.28 }] },
+    campana: { wave: 'triangle', beeps: [{ f: 1318, t: 0 }, { f: 880, t: 0.18 }, { f: 1318, t: 0.4 }] }
+  };
+
+  // Reproduce un sonido. force=true ignora el toggle (para previsualizar).
+  function playAlarmSound(soundId, force) {
+    if (!force && !isSoundEnabled()) return;
+    const pattern = SOUND_PATTERNS[soundId] || SOUND_PATTERNS.clasico;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      // Algunos navegadores suspenden el contexto hasta una interacción del usuario.
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const now = audioCtx.currentTime;
+      pattern.beeps.forEach(({ f, t }) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = pattern.wave;
+        osc.frequency.value = f;
+        gain.gain.setValueAtTime(0.0001, now + t);
+        gain.gain.exponentialRampToValueAtTime(0.25, now + t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + t + 0.2);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(now + t);
+        osc.stop(now + t + 0.22);
+      });
+    } catch (e) {
+      console.warn('[Cycora] No se pudo reproducir el sonido de alarma:', e);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // NOTIFICACIONES DEL SISTEMA
+  // --------------------------------------------------------------------------
+  function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+      alert('Este navegador no soporta notificaciones del sistema. Las alertas se mostrarán dentro de la app con sonido.');
+      return;
+    }
+    Notification.requestPermission().then((perm) => {
+      if (perm === 'granted') {
+        alert('✅ Notificaciones activadas. Cycora podrá avisarte aunque la pestaña esté en segundo plano.');
+      } else {
+        alert('Las notificaciones del sistema están desactivadas. Puedes activarlas desde la configuración del navegador.');
+      }
+    });
+  }
+
+  function showSystemNotification(title, body) {
+    if (('Notification' in window) && Notification.permission === 'granted') {
+      try {
+        new Notification(title, { body, icon: 'icons/icon.svg', badge: 'icons/icon.svg' });
+      } catch (e) {
+        console.warn('[Cycora] No se pudo mostrar la notificación del sistema:', e);
+      }
+    }
+  }
+
+  // Dispara una alerta: suena (con su sonido elegido) + notificación del sistema.
+  function fireAlert(alert) {
+    playAlarmSound(alert.sound);
+    showSystemNotification(alert.title, alert.message);
+  }
+
+  // --------------------------------------------------------------------------
+  // PROGRAMACIÓN DE RECORDATORIOS A UNA HORA ESPECÍFICA
+  // --------------------------------------------------------------------------
+  const scheduledTimers = new Map(); // id -> timeoutId
+
+  // Programa una alarma con FECHA + HORA + SONIDO específicos.
+  function scheduleReminder(title, dateYMD, timeHHMM, soundId) {
+    const [h, m] = (timeHHMM || '21:00').split(':').map(Number);
+    let target;
+    if (dateYMD) {
+      // Fecha explícita elegida por la usuaria.
+      target = new Date(`${dateYMD}T${String(h || 0).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}:00`);
+    } else {
+      // Sin fecha: hoy, y si la hora ya pasó, mañana.
+      target = new Date();
+      target.setHours(h || 0, m || 0, 0, 0);
+      if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
+    }
+
+    const alert = {
+      id: `notif-${Date.now()}`,
+      type: 'toma_anticonceptivo',
+      title: title || 'Recordatorio',
+      message: `Alarma programada para el ${target.toLocaleDateString('es-ES')} a las ${timeHHMM}.`,
+      scheduledFor: target.toISOString(),
+      sound: soundId || 'clasico',
+      status: 'pendiente',
+      attendance: [] // registros de atención: { date, at }
+    };
+    state.notifications.unshift(alert);
+    persistState();
+    renderNotifications();
+    armTimerForAlert(alert);
+    return alert;
+  }
+
+  // Programa el disparo real (sonido + notificación) cuando llegue la hora.
+  function armTimerForAlert(alert) {
+    if (alert.status !== 'pendiente') return;
+    const delay = new Date(alert.scheduledFor).getTime() - Date.now();
+    // setTimeout tiene un máximo (~24.8 días); limitamos para no desbordar.
+    if (delay <= 0 || delay > 86400000) return; // solo armamos dentro de las próximas 24h
+    if (scheduledTimers.has(alert.id)) clearTimeout(scheduledTimers.get(alert.id));
+    const timerId = setTimeout(() => {
+      // Reconfirmamos que siga pendiente antes de disparar.
+      const current = state.notifications.find((n) => n.id === alert.id);
+      if (current && current.status === 'pendiente') {
+        fireAlert(current);
+        renderNotifications();
+      }
+      scheduledTimers.delete(alert.id);
+    }, delay);
+    scheduledTimers.set(alert.id, timerId);
+  }
+
+  // Al cargar la app, rearma los temporizadores de los recordatorios pendientes de hoy.
+  function rearmPendingReminders() {
+    (state.notifications || []).forEach((n) => {
+      if (n.status === 'pendiente') armTimerForAlert(n);
+    });
+  }
+
+  function setupNotificationScheduling() {
+    // Prellenar la fecha con hoy.
+    const dateInput = document.getElementById('reminder-date-input');
+    if (dateInput && !dateInput.value) dateInput.value = getTodayISO();
+
+    document.getElementById('btn-schedule-reminder')?.addEventListener('click', () => {
+      const titleInput = document.getElementById('reminder-title-input');
+      const timeInput = document.getElementById('reminder-time-input');
+      const soundSelect = document.getElementById('reminder-sound-select');
+      const title = (titleInput?.value || '').trim() || 'Recordatorio';
+      const date = dateInput?.value || getTodayISO();
+      const time = timeInput?.value || '21:00';
+      const sound = soundSelect?.value || 'clasico';
+
+      const created = scheduleReminder(title, date, time, sound);
+      if (titleInput) titleInput.value = '';
+      alert(`⏰ Alarma "${title}" programada para el ${new Date(created.scheduledFor).toLocaleDateString('es-ES')} a las ${time}.`);
+    });
+
+    // Previsualizar el sonido seleccionado (fuerza la reproducción).
+    document.getElementById('btn-preview-sound')?.addEventListener('click', () => {
+      const soundSelect = document.getElementById('reminder-sound-select');
+      playAlarmSound(soundSelect?.value || 'clasico', true);
+    });
+
+    document.getElementById('btn-enable-notifications')?.addEventListener('click', requestNotificationPermission);
   }
 
   // ==========================================================================
@@ -1193,14 +1545,19 @@
     document.querySelectorAll(`.nav-item[data-tab="${tabId}"]`).forEach(el => el.classList.add('active'));
     document.querySelectorAll(`.bottom-nav-item[data-tab="${tabId}"]`).forEach(el => el.classList.add('active'));
 
-    const titles = {
+    // El título del header queda fijo con el nombre de la app (Cycora).
+    // La sección actual se muestra como subtítulo junto a la fecha.
+    const sectionNames = {
       'tab-today': 'Mi Ciclo',
       'tab-calendar': 'Calendario Menstrual',
       'tab-tracking': 'Registro Diario',
       'tab-notifications': 'Alertas y Recordatorios',
       'tab-profile': 'Mi Perfil'
     };
-    if (DOM.headerTitle) DOM.headerTitle.textContent = titles[tabId] || 'Cycora';
+    if (DOM.headerCurrentDate) {
+      const section = sectionNames[tabId] || '';
+      DOM.headerCurrentDate.textContent = section ? `${section} · ${currentDateText()}` : currentDateText();
+    }
 
     if (tabId === 'tab-today') renderCycleWheel();
     if (tabId === 'tab-calendar') renderCalendarMonth();
@@ -1242,7 +1599,72 @@
   }
 
   // ==========================================================================
-  // 11. UTILITARIOS & ARRANQUE
+  // 11. TEMA CLARO / OSCURO
+  // ==========================================================================
+  const THEME_KEY = 'CYCORA_THEME';
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const btn = document.getElementById('btn-theme-toggle');
+    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* almacenamiento no disponible */ }
+  }
+
+  function setupTheme() {
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (e) { /* ignore */ }
+    // Si no hay preferencia guardada, respeta la del sistema operativo.
+    if (!saved) {
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      saved = prefersDark ? 'dark' : 'light';
+    }
+    applyTheme(saved);
+
+    document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+  }
+
+  // ==========================================================================
+  // 12. INSTALACIÓN PWA (BOTÓN "DESCARGAR / INSTALAR" + OFFLINE)
+  // ==========================================================================
+  let deferredInstallPrompt = null;
+
+  function setupInstallButton() {
+    const installBtn = document.getElementById('btn-install-pwa');
+    if (!installBtn) return;
+
+    // El navegador dispara este evento cuando la PWA es instalable.
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      installBtn.classList.add('is-available');
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) {
+        // Respaldo: ya instalada o navegador sin soporte de prompt (ej. iOS Safari).
+        alert('Para instalar Cycora:\n\n• En Android/Chrome: menú ⋮ → "Agregar a pantalla de inicio".\n• En iPhone/Safari: botón Compartir → "Agregar a inicio".\n• En PC: ícono de instalar en la barra de direcciones.\n\nUna vez instalada funciona sin conexión.');
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') {
+        installBtn.classList.remove('is-available');
+      }
+      deferredInstallPrompt = null;
+    });
+
+    // Cuando se instala correctamente, ocultamos el botón.
+    window.addEventListener('appinstalled', () => {
+      installBtn.classList.remove('is-available');
+      deferredInstallPrompt = null;
+    });
+  }
+
+  // ==========================================================================
+  // 13. UTILITARIOS & ARRANQUE
   // ==========================================================================
   function getTodayISO() {
     return new Date().toISOString().split('T')[0];
@@ -1252,19 +1674,27 @@
     return d.toISOString().split('T')[0];
   }
 
+  // Fecha de hoy en formato legible (ej. "lunes, 9 de noviembre").
+  function currentDateText() {
+    return new Date().toLocaleDateString('es-ES', {
+      weekday: 'long', day: 'numeric', month: 'long'
+    });
+  }
+
   function init() {
     cacheDOMElements();
 
     if (DOM.headerCurrentDate) {
-      DOM.headerCurrentDate.textContent = new Date().toLocaleDateString('es-ES', {
-        weekday: 'long', day: 'numeric', month: 'long'
-      });
+      DOM.headerCurrentDate.textContent = `Mi Ciclo · ${currentDateText()}`;
     }
 
+    setupTheme();
+    setupInstallButton();
     setupNavigation();
     setupPeriodActions();
     setupTrackingForm();
     setupProfileTab();
+    setupNotificationScheduling();
 
     checkUserRegistration();
 
@@ -1272,6 +1702,8 @@
     renderCycleWheel();
     renderCalendarMonth();
     renderNotifications();
+
+    rearmPendingReminders();
   }
 
   if (document.readyState === 'loading') {

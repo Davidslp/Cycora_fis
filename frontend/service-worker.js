@@ -8,7 +8,7 @@
  * IMPORTANTE: al cambiar los archivos del app shell, sube CACHE_VERSION
  * para que los navegadores descarten la caché vieja.
  */
-const CACHE_VERSION = 'cycora-v1';
+const CACHE_VERSION = 'cycora-v3';
 const APP_SHELL = [
   './',
   './index.html',

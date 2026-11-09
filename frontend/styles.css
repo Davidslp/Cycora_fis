@@ -3,48 +3,107 @@
    Paleta: Rosas, Púrpuras, Lilas y Fases Biológicas del Ciclo
    ========================================================================== */
 
+/* ==========================================================================
+   SISTEMA DE TEMAS (CLARO / OSCURO)
+   Las variables de superficie, texto y acento se redefinen por tema.
+   El tema se controla con el atributo data-theme en <html>.
+   ========================================================================== */
+
+/* --- TEMA CLARO (por defecto) --- */
+:root,
+[data-theme="light"] {
+  /* Paleta solicitada - Entorno Claro */
+  --bg-page: #F3E5F5;        /* Fondo: lila muy claro */
+  --text-main: #4A148C;      /* Texto principal: púrpura oscuro */
+  --bg-card: #FCE4EC;        /* Tarjetas: rosa muy claro */
+  --accent: #D500F9;         /* Acento: magenta vibrante */
+
+  --primary: #D500F9;
+  --primary-dark: #4A148C;
+  --primary-light: #F3E0FB;
+  --secondary: #F15BB5;
+  --accent-pink: #D500F9;
+
+  --text-muted: #7B4A9E;
+  --text-light: #A978C4;
+  --border-color: #E7C6EE;
+  --border-light: #F0DAF6;
+
+  /* Segmentos de diagrama/fases: amarillo, magenta y verde claro */
+  --phase-menstrual: #D500F9; /* magenta */
+  --phase-follicular: #8BC34A; /* verde claro */
+  --phase-ovulatory: #FFD600;  /* amarillo */
+  --phase-luteal: #7B1FA2;     /* púrpura de apoyo */
+
+  --shadow-sm: 0 2px 8px rgba(74, 20, 140, 0.08);
+  --shadow-md: 0 8px 24px rgba(74, 20, 140, 0.12);
+  --shadow-lg: 0 16px 36px rgba(74, 20, 140, 0.16);
+
+  color-scheme: light;
+}
+
+/* --- TEMA OSCURO --- */
+[data-theme="dark"] {
+  /* Paleta solicitada - Entorno Oscuro */
+  --bg-page: #212121;        /* Fondo: negro */
+  --text-main: #F8BBD0;      /* Texto principal: rosa muy claro */
+  --bg-card: #311B92;        /* Tarjetas: púrpura oscuro */
+  --accent: #FF4081;         /* Acento: rosa vibrante */
+
+  --primary: #FF4081;
+  --primary-dark: #F8BBD0;
+  --primary-light: #3A2370;
+  --secondary: #F15BB5;
+  --accent-pink: #FF4081;
+
+  --text-muted: #C9A7D8;
+  --text-light: #9E86B5;
+  --border-color: #4A3690;
+  --border-light: #3A2a73;
+
+  /* Segmentos de diagrama/fases: amarillo, magenta y verde claro */
+  --phase-menstrual: #FF4081; /* magenta/rosa */
+  --phase-follicular: #AED581; /* verde claro */
+  --phase-ovulatory: #FFD600;  /* amarillo */
+  --phase-luteal: #B388FF;     /* púrpura de apoyo */
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
+}
+
 :root {
   --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Colores de Marca Cycora */
-  --primary: #9B5DE5;
-  --primary-dark: #7209B7;
-  --primary-light: #F3E8FF;
-  --secondary: #F15BB5;
-  --accent-pink: #F72585;
+  /* NOTA: los colores de marca, fases y superficies ahora se definen
+     por tema arriba ([data-theme="light"] / [data-theme="dark"]). */
 
-  /* Fases Biológicas (Poster Cycora) */
-  --phase-menstrual: #FF4D6D;
-  --phase-follicular: #00B4D8;
-  --phase-ovulatory: #FFB703;
-  --phase-luteal: #8338EC;
-
-  /* Neutros y Superficies */
-  --bg-page: #FAF7FB;
-  --bg-card: #FFFFFF;
-  --text-main: #2B2D42;
-  --text-muted: #6C757D;
-  --text-light: #ADB5BD;
-  --border-color: #EEDEF7;
-  --border-light: #F4ECF9;
-
-  /* Estados */
+  /* Estados (independientes del tema) */
   --success: #2A9D8F;
   --warning: #F39C12;
   --danger: #E63946;
   --info: #3A86FF;
 
-  /* Sombras y Radios */
+  /* Radios */
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 22px;
   --radius-full: 9999px;
-  --shadow-sm: 0 2px 8px rgba(155, 93, 229, 0.06);
-  --shadow-md: 0 8px 24px rgba(155, 93, 229, 0.10);
-  --shadow-lg: 0 16px 36px rgba(114, 9, 183, 0.14);
 
   /* Transición fluida con aceleración por hardware */
   --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Transición suave al cambiar de tema */
+body,
+.card,
+.sidebar,
+.top-header,
+.bottom-nav,
+.modal-card {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Reset Global */
@@ -255,16 +314,47 @@ body {
   gap: 16px;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-brand-logo {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent-pink), var(--primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(213, 0, 249, 0.3);
+  transform: translateZ(0);
+}
+
+.header-brand-logo svg {
+  width: 28px;
+  height: 28px;
+}
+
 .header-left h2 {
   font-size: 1.8rem;
   font-weight: 800;
-  color: var(--primary-dark);
+  line-height: 1.05;
+  background: linear-gradient(135deg, var(--primary-dark), var(--accent-pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .header-date {
-  font-size: 0.88rem;
+  display: block;
+  font-size: 0.85rem;
   color: var(--text-muted);
   font-weight: 500;
+  text-transform: capitalize;
 }
 
 .header-actions {
@@ -1404,4 +1494,258 @@ body {
     flex-direction: column;
     gap: 0;
   }
+}
+
+/* ==========================================================================
+   NUEVAS FUNCIONES: TEMA, INSTALACIÓN PWA, TOOLTIP Y DETALLE DE DÍA
+   ========================================================================== */
+
+/* --- Botones de acción del header (tema e instalar) --- */
+.btn-icon-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: var(--transition);
+}
+.btn-icon-toggle:hover {
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+#btn-install-pwa {
+  display: none; /* el JS lo muestra solo si la instalación es posible */
+  align-items: center;
+  gap: 6px;
+}
+#btn-install-pwa.is-available {
+  display: inline-flex;
+}
+
+/* --- Tooltip de previsualización al pasar el mouse por un día --- */
+.cal-day-cell {
+  position: relative;
+}
+.cal-day-preview {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  min-width: 170px;
+  max-width: 230px;
+  background: var(--text-main);
+  color: var(--bg-card);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  text-align: left;
+  white-space: normal;
+}
+.cal-day-cell:hover .cal-day-preview {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.cal-day-preview::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--text-main);
+}
+.cal-day-preview .preview-title {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 4px;
+}
+.cal-day-preview .preview-row {
+  display: block;
+  opacity: 0.92;
+}
+.cal-day-preview .preview-empty {
+  opacity: 0.75;
+  font-style: italic;
+}
+
+/* --- Layout del calendario con panel de detalle lateral --- */
+.calendar-with-detail {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+@media (min-width: 1100px) {
+  .calendar-with-detail {
+    grid-template-columns: 1fr 320px;
+    align-items: start;
+  }
+}
+
+.day-detail-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 16px;
+}
+.day-detail-panel .detail-date {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+.day-detail-panel .detail-phase {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  margin-bottom: 12px;
+}
+.day-detail-panel .detail-block {
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+}
+.day-detail-panel .detail-block .lbl {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.day-detail-panel .detail-notes {
+  background: var(--bg-page);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-style: italic;
+  font-size: 0.82rem;
+}
+.day-detail-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px 8px;
+  font-size: 0.88rem;
+}
+.cal-day-cell.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* --- Campo de hora para programar notificaciones --- */
+.schedule-reminder-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 14px;
+  padding: 14px;
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-color);
+}
+.schedule-reminder-box .form-group {
+  margin-bottom: 0;
+  flex: 1 1 140px;
+}
+.sound-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   GESTIÓN DE ALARMAS: ELIMINAR Y REGISTRO DE ATENCIÓN
+   ========================================================================== */
+.alert-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.btn-icon-del {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  opacity: 0.7;
+  transition: var(--transition);
+}
+.btn-icon-del:hover {
+  opacity: 1;
+  background: rgba(230, 57, 70, 0.12);
+  transform: scale(1.08);
+}
+
+.attendance-register-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-color);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.attendance-register-row label {
+  font-weight: 600;
+}
+.attendance-register-row .form-control-sm {
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-family: inherit;
+}
+
+.attendance-list {
+  margin-top: 10px;
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+.attendance-title {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.attendance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-main);
+  padding: 3px 0;
+}
+.attendance-row .btn-del-attendance {
+  color: var(--danger);
+  font-size: 0.9rem;
+  padding: 0 4px;
 }
