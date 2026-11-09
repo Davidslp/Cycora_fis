@@ -1,0 +1,41 @@
+name: Desplegar PWA Cycora en GitHub Pages
+
+# Despliega automáticamente la carpeta frontend/ como sitio estático
+# cada vez que haya un push a la rama principal.
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch: # permite lanzarlo manualmente desde la pestaña Actions
+
+# Permisos mínimos que GitHub Pages necesita.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita despliegues simultáneos pisándose entre sí.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir la PWA (carpeta frontend/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./frontend
+
+      - name: Desplegar
+        id: deployment
+        uses: actions/deploy-pages@v4

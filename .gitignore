@@ -1,0 +1,27 @@
+# Dependencias
+node_modules/
+
+# Salida de compilación TypeScript
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Variables de entorno (nunca subir secretos)
+.env
+.env.local
+.env.*.local
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores / IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Cachés varias
+.cache/

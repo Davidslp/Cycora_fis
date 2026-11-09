@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Cycora - Control Menstrual y Síntomas</title>
+
+  <!-- PWA: manifiesto e identidad visual instalable -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#FF4D6D" />
+  <meta name="description" content="Cycora: seguimiento del ciclo menstrual, registro de síntomas y recomendaciones adaptadas a tu método anticonceptivo." />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Cycora" />
+
   <link rel="stylesheet" href="styles.css" />
   <!-- Google Fonts: Plus Jakarta Sans para máxima legibilidad y estética médica moderna -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -644,5 +655,15 @@
   </div>
 
   <script src="app.js"></script>
+  <!-- PWA: registro del service worker para funcionamiento offline e instalación -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('service-worker.js').catch(function (err) {
+          console.warn('[Cycora] No se pudo registrar el service worker:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

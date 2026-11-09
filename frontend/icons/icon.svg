@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Cycora">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF6B8B"/>
+      <stop offset="1" stop-color="#FF4D6D"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path fill="#FFFFFF" d="M256 400c-8 0-16-3-22-9l-96-93c-34-33-45-74-30-112 14-36 48-58 86-58 26 0 48 10 62 30 14-20 36-30 62-30 38 0 72 22 86 58 15 38 4 79-30 112l-96 93c-6 6-14 9-22 9z"/>
+  <circle cx="256" cy="232" r="34" fill="#FF4D6D"/>
+</svg>
